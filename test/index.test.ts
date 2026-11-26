@@ -10,6 +10,7 @@ import {
 import { Readable } from "node:stream";
 import { H3, HTTPError, readBody, serve } from "h3";
 import { $fetch } from "../src/index.ts";
+import { withBase } from "../src/utils.url.ts";
 
 describe("ofetch", () => {
   let listener: ReturnType<typeof serve>;
@@ -114,6 +115,29 @@ describe("ofetch", () => {
     expect(await $fetch("/x?foo=123", { baseURL: getURL("url") })).to.equal(
       "/url/x?foo=123"
     );
+  });
+
+  it("uses an absolute request URL with a default baseURL", async () => {
+    const api = $fetch.create({ baseURL: getURL("url/base") });
+    expect(await api(getURL("url/absolute?foo=123"))).to.equal(
+      "/url/absolute?foo=123"
+    );
+    expect(await api("relative")).to.equal("/url/base/relative");
+  });
+
+  it.each([
+    "https://other.example/path?x=1",
+    "http://other.example/path",
+    "HTTPS://other.example/path",
+    "data:text/plain,hello",
+  ])("does not prefix an absolute URL: %s", (request) => {
+    expect(withBase(request, "https://api.example/base")).to.equal(request);
+  });
+
+  it("can explicitly use a URL as a path segment", () => {
+    expect(
+      withBase("/https://other.example/image", "https://cdn.example")
+    ).to.equal("https://cdn.example/https://other.example/image");
   });
 
   it("stringifies posts body automatically", async () => {

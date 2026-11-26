@@ -38,7 +38,7 @@ export function joinURL(base?: string, path?: string): string {
  * Adds the base path to the input path, if it is not already present.
  */
 export function withBase(input = "", base = ""): string {
-  if (!base || base === "/") {
+  if (!base || base === "/" || /^[a-z][\da-z+.-]*:/i.test(input)) {
     return input;
   }
 
